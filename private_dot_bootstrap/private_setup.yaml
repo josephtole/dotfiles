@@ -1,1 +1,19 @@
 ---
+- name: Machine setup
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name: Install homebrew packages
+      homebrew:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - git
+        - tree
+        - htop
+        - jq
+        - neovim
+        - zsh
+        - tmux
