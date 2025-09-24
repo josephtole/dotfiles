@@ -204,7 +204,7 @@ STEP_ROOT_CA='4b6e5c47467a2fa0fef249a275cee24140eeaa3738b15d952089ea7402ba852e'
 alias drop_cache='sudo sync && sudo sysctl -w vm.drop_caches=3'
 alias drop_swap='drop_cache && sudo swapoff -a && sudo swapon -a'
 # alias ls='/bin/ls --color -Fh'
-alias db='distrobox'
+# alias db='distrobox'
 alias cat='batcat --style plain'
 alias l='eza --icons=always'
 alias la='l -A'
@@ -213,9 +213,7 @@ alias l1='l -1'
 alias code='flatpak run com.visualstudio.code'
 alias vim=nvim
 alias docker=podman
-# alias python=python3
-alias butane='podman run --rm --interactive --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release'
-alias coreos-installer='podman run --pull=always --privileged --rm -v /dev:/dev -v /run/udev:/run/udev -v .:/data -w /data quay.io/coreos/coreos-installer:release'
+alias cm=chezmoi
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
