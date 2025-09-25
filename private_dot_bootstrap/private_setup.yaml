@@ -9,19 +9,23 @@
       community.general.homebrew:
         name: "{{ item }}"
         state: present
-        path: "{{ ansible_env.HOME }}/.local/homebrew/bin"
+        # path: "{{ ansible_env.HOME }}/.local/homebrew/bin"
       loop:
-        - git
-        - tree
-        - htop
-        - jq
+        # - htop
+        # - jq
         - neovim
         - zsh
         - tmux
+        # - autossh
+        # - nmap
+        # - sqlite
 
     - name: Install uv packages
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
       ansible.builtin.command:
         cmd: uv tool install {{ item }}
       loop:
         - pre-commit
         - black
+        - powerline-status
