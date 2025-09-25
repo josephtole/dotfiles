@@ -6,9 +6,10 @@
 
   tasks:
     - name: Install homebrew packages
-      homebrew:
+      community.general.homebrew:
         name: "{{ item }}"
         state: present
+        path: "{{ ansible_env.HOME }}/.local/homebrew/bin"
       loop:
         - git
         - tree
@@ -17,3 +18,10 @@
         - neovim
         - zsh
         - tmux
+
+    - name: Install uv packages
+      ansible.builtin.command:
+        cmd: uv tool install {{ item }}
+      loop:
+        - pre-commit
+        - black

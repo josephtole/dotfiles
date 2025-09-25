@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# .bootstrap/setup.yaml hash: {{ include "private_dot_bootstrap/private_setup.yaml" | sha256sum }}
+
+export PATH="${HOME}/.local/bin:${PATH}"
+eval "$("${HOME}"/.local/homebrew/bin/brew shellenv)"
+
+if command -v ansible-playbook &> /dev/null; then
+    ansible-playbook {{ joinPath .chezmoi.sourceDir "private_dot_bootstrap/private_setup.yaml" | quote }}
+else
+    echo '[ERROR] ansible-playbook command not found. Please install Ansible first.'
+    exit 1
+fi
