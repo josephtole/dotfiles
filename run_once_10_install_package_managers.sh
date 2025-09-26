@@ -10,6 +10,5 @@ export PATH="${HOME}/.local/bin:${PATH}"
 # Install Homebrew
 # [[ -d "${HOME}/.local/homebrew" ]] || git clone https://github.com/Homebrew/brew.git ~/.local/homebrew
 # eval "$(${HOME}/.local/homebrew/bin/brew shellenv)"
-export NONINTERACTIVE=1 CI=1
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 # eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
