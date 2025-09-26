@@ -4,6 +4,10 @@
   connection: local
   gather_facts: true
 
+  vars:
+    zsh_custom_plugins_dir: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins"
+    zsh_custom_themes_dir: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/themes"
+
   tasks:
     - name: Install homebrew packages
       community.general.homebrew:
@@ -29,3 +33,63 @@
         - pre-commit
         - black
         - powerline-status
+
+    - name: Check if pyenv is installed
+      stat:
+        path: "{{ ansible_env.HOME }}/.pyenv/bin/pyenv"
+      register: pyenv_check
+
+    - name: Install pyenv if not present
+      shell: curl https://pyenv.run | bash
+      args:
+        executable: /bin/bash
+      when: not pyenv_check.stat.exists
+
+    - name: Check if oh-my-zsh is installed
+      stat:
+        path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+      register: ohmyzsh_check
+
+    - name: Install oh-my-zsh if not present
+      shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --skip-chsh --keep-zshrc
+      args:
+        executable: /bin/bash
+      when: not ohmyzsh_check.stat.exists
+
+    - name: Ensure plugins dir exists
+      file:
+        path: "{{ zsh_custom_plugins_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Install custom zsh plugins
+      git:
+        repo: "https://github.com/{{ item.repo }}"
+        dest: "{{ zsh_custom_plugins_dir }}/{{ item.dir | default(item.repo | basename) }}"
+        depth: 1
+        single_branch: yes
+        update: yes
+        version: HEAD
+        accept_hostkey: yes
+      loop_control:
+        label: "{{ item.repo }} -> {{ item.dir | default(item.repo | basename) }}"
+      loop:
+      - { repo: zsh-users/zsh-autosuggestions }
+      - { repo: zsh-users/zsh-syntax-highlighting }
+      - { repo: popstas/zsh-command-time, dir: command-time }
+      - { repo: MichaelAquilina/zsh-you-should-use, dir: you-should-use }
+      - { repo: tamcore/autoupdate-oh-my-zsh-plugins, dir: autoupdate }
+
+    - name: Install custom zsh themes
+      git:
+        repo: "https://github.com/{{ item.repo }}"
+        dest: "{{ zsh_custom_themes_dir }}/{{ item.dir | default(item.repo | basename) }}"
+        depth: 1
+        single_branch: yes
+        update: yes
+        version: HEAD
+        accept_hostkey: yes
+      loop_control:
+        label: "{{ item.repo }} -> {{ item.dir | default(item.repo | basename) }}"
+      loop:
+      - { repo: romkatv/powerlevel10k }

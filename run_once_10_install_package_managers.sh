@@ -12,5 +12,4 @@ export PATH="${HOME}/.local/bin:${PATH}"
 # eval "$(${HOME}/.local/homebrew/bin/brew shellenv)"
 export NONINTERACTIVE=1 CI=1
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-sudo chown -R "$USER" /home/linuxbrew/
 # eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"

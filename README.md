@@ -11,14 +11,16 @@
 Run the below commands from inside the repository.
 
 #### Start container
+
 ```bash
 podman run -it --rm -v "${PWD}:/workspace:Z" debian:bookworm /bin/bash
 ```
 
 #### Setup from root user
+
 ```bash
 apt update && apt install -y curl sudo git procps build-essential tar xz-utils file \
-  findutils
+  findutils python3
 useradd -m -s /bin/bash tester
 mkdir -p /home/tester/.local/share
 cp -av /workspace /home/tester/.local/share/chezmoi
@@ -29,7 +31,11 @@ sudo -u tester -i
 ```
 
 #### Setup from tester user
+
 ```bash
 cd ${HOME}/.local/share/chezmoi
 time sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+export PATH="~/.local/bin:$PATH"
+eval "$(uv generate-shell-completion bash)"
 ```
