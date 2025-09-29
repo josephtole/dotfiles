@@ -1,0 +1,7 @@
+Host *
+ServerAliveInterval 1
+ServerAliveCountMax 5
+Compression yes
+SetEnv TERM=xterm-256color
+
+Include ~/.ssh/config.d/*

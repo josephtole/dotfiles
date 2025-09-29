@@ -1,0 +1,159 @@
+---
+- name: Machine setup
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    zsh_custom_plugins_dir: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins"
+    zsh_custom_themes_dir: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/themes"
+
+
+  tasks:
+    # - name: Install homebrew packages
+    #   community.general.homebrew:
+    #     name: "{{ item }}"
+    #     state: present
+    #     # path: "{{ ansible_env.HOME }}/.local/homebrew/bin"
+    #   loop:
+    #     # - htop
+    #     # - jq
+    #     - neovim
+    #     - zsh
+    #     - tmux
+    #     - autossh
+    #     # - nmap
+    #     # - sqlite
+
+    - name: Imstall homenbrew packages from Brewfile
+      ansible.builtin.command:
+        cmd: "brew bundle install --file='{{ ansible_env.HOME }}/.local/share/chezmoi/private_dot_bootstrap/Brewfile'"
+
+    - name: Install uv packages
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
+      ansible.builtin.command:
+        cmd: uv tool install {{ item }}
+      loop:
+        - pre-commit
+        - black
+        - powerline-status
+
+    - name: Check if pyenv is installed
+      stat:
+        path: "{{ ansible_env.HOME }}/.pyenv/bin/pyenv"
+      register: pyenv_check
+
+    - name: Install pyenv if not present
+      shell: curl https://pyenv.run | bash
+      args:
+        executable: /bin/bash
+      when: not pyenv_check.stat.exists
+
+    - name: Get pyenv root path
+      command: pyenv root
+      register: pyenv_root
+      changed_when: false
+
+    - name: Install pyenv-virtualenv plugin
+      git:
+        repo: https://github.com/pyenv/pyenv-virtualenv.git
+        dest: "{{ pyenv_root.stdout }}/plugins/pyenv-virtualenv"
+        version: master
+
+    - name: Check if oh-my-zsh is installed
+      stat:
+        path: "{{ ansible_env.HOME }}/.oh-my-zsh"
+      register: ohmyzsh_check
+
+    - name: Install oh-my-zsh if not present
+      shell: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --skip-chsh --keep-zshrc
+      args:
+        executable: /bin/bash
+      when: not ohmyzsh_check.stat.exists
+
+    - name: Ensure plugins dir exists
+      file:
+        path: "{{ zsh_custom_plugins_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Install custom zsh plugins
+      git:
+        repo: "https://github.com/{{ item.repo }}"
+        dest: "{{ zsh_custom_plugins_dir }}/{{ item.dir | default(item.repo | basename) }}"
+        depth: 1
+        single_branch: yes
+        update: yes
+        version: HEAD
+        accept_hostkey: yes
+      loop_control:
+        label: "{{ item.repo }} -> {{ item.dir | default(item.repo | basename) }}"
+      loop:
+      - { repo: zsh-users/zsh-autosuggestions }
+      - { repo: zsh-users/zsh-syntax-highlighting }
+      - { repo: popstas/zsh-command-time, dir: command-time }
+      - { repo: MichaelAquilina/zsh-you-should-use, dir: you-should-use }
+      - { repo: tamcore/autoupdate-oh-my-zsh-plugins, dir: autoupdate }
+
+    - name: Install custom zsh themes
+      git:
+        repo: "https://github.com/{{ item.repo }}"
+        dest: "{{ zsh_custom_themes_dir }}/{{ item.dir | default(item.repo | basename) }}"
+        depth: 1
+        single_branch: yes
+        update: yes
+        version: HEAD
+        accept_hostkey: yes
+      loop_control:
+        label: "{{ item.repo }} -> {{ item.dir | default(item.repo | basename) }}"
+      loop:
+      - { repo: romkatv/powerlevel10k }
+
+    - name: Add block to bashrc
+      ansible.builtin.blockinfile:
+        path: "{{ ansible_env.HOME }}/.bashrc"
+        marker: "# {mark} ANSIBLE: custom block"
+        block: |
+          umask 077
+      
+          export PATH="$HOME/bin:$PATH"
+
+          # uv
+          ########################################################################################
+          if [[ -d "${HOME}/.local/bin" ]]
+          then
+            PATH="${HOME}/.local/bin:${PATH}"
+          fi
+
+          if command -v uv >/dev/null 2>&1
+          then
+            eval "$(uv --generate-shell-completion bash)"
+          fi
+          if command -v uvx >/dev/null 2>&1
+          then
+            eval "$(uvx --generate-shell-completion bash)"
+          fi
+
+          # pyenv
+          ########################################################################################
+          export PYENV_ROOT="$HOME/.pyenv"
+          [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+          eval "$(pyenv init - bash)"
+          eval "$(pyenv init --path bash)"
+          eval "$(pyenv virtualenv-init -)"
+          # eval "$(uv generate-shell-completion bash)"
+          # eval "$(uvx --generate-shell-completion bash)"
+
+
+          # brew
+          ########################################################################################
+          [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+          # chezmoi
+          ########################################################################################
+          if command -v chezmoi >/dev/null 2>&1
+          then
+            eval "$(chezmoi completion bash)"
+            alias cm=chezmoi
+          fi
